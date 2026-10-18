@@ -3,7 +3,7 @@ window.TRIVOSH_CONFIG = {
   supabaseUrl: "PASTE_SUPABASE_PROJECT_URL_HERE",
   supabaseAnonKey: "PASTE_SUPABASE_ANON_OR_PUBLISHABLE_KEY_HERE",
   adminUserId: "PASTE_OWNER_AUTH_USER_UUID_HERE",
-  upiId: "YOUR-UPI-ID@BANK",
-  payeeName: "Trivosh",
-  whatsappNumber: "91XXXXXXXXXX"
+  upiId: "ghoshiji96@axl",
+  payeeName: "Triloki",
+  whatsappNumber: "919617510086"
 };
