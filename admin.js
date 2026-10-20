@@ -1,10 +1,197 @@
-(()=>{'use strict';const c=window.TRIVOSH_CONFIG||{},$=id=>document.getElementById(id),msg=s=>{$('adminMessage').textContent=s};const configured=()=>window.supabase&&c.supabaseUrl&&!c.supabaseUrl.includes('PASTE_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.includes('PASTE_')&&c.adminUserId&&!c.adminUserId.includes('PASTE_');const db=()=>window.supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);let client,owner=false;const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
-function formClear(){['productId','productName','productPrice','productSize','productImage','productDescription'].forEach(id=>$(id).value='')}
-async function sessionCheck(){if(!configured()){msg('config.js mein Supabase URL, publishable/anon key aur owner Auth UUID bharein. Phir SQL setup run karein.');return}client=db();const {data}=await client.auth.getSession();if(data.session)await signedIn(data.session.user)}
-async function signedIn(user){if(user.id!==c.adminUserId){await client.auth.signOut();owner=false;msg('Access denied: ye login owner UUID se match nahi karta.');return}owner=true;$('loginCard').classList.add('hidden');$('dashboard').classList.remove('hidden');msg('Owner login successful. Products aur orders yahan manage kar sakte hain.');await Promise.all([loadProducts(),loadOrders()])}
-$('loginBtn').onclick=async()=>{if(!configured()){msg('Pehle config.js ke 3 Supabase fields bharna zaroori hai.');return}const email=$('adminEmail').value.trim(),password=$('adminPassword').value;if(!email||!password){msg('Email aur password bharein.');return}client=db();$('loginBtn').disabled=true;const {data,error}=await client.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;if(error){msg('Login error: '+error.message);return}await signedIn(data.user)};
-$('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();owner=false;$('dashboard').classList.add('hidden');$('loginCard').classList.remove('hidden');msg('Logged out.')};$('clearProductBtn').onclick=formClear;
-$('saveProductBtn').onclick=async()=>{if(!owner)return msg('Pehle owner login karein.');const name=$('productName').value.trim(),price=Number($('productPrice').value);if(!name||!Number.isFinite(price)||price<=0)return msg('Product name aur sahi price bharein.');const row={name,price,size:$('productSize').value.trim(),image_url:$('productImage').value.trim()||null,description:$('productDescription').value.trim(),active:true};const id=$('productId').value;const result=id?await client.from('products').update(row).eq('id',id):await client.from('products').insert(row);if(result.error){msg('Save error: '+result.error.message);return}msg('Product save ho gaya.');formClear();await loadProducts()};
-async function loadProducts(){if(!owner)return;const {data,error}=await client.from('products').select('*').order('created_at');if(error){$('adminProducts').textContent='Products read error: '+error.message;return}$('adminProducts').innerHTML=(data||[]).map(p=>`<div class="admin-list-row"><div><b>${esc(p.name)}</b><small>${money(p.price)} · ${esc(p.size||'')}</small></div><button class="btn small" data-edit="${p.id}">Edit</button><button class="btn small outline" data-toggle="${p.id}" data-active="${p.active}">${p.active?'Hide':'Show'}</button></div>`).join('')||'<p>No products yet. Add one above.</p>';$('adminProducts').onclick=async e=>{const edit=e.target.closest('[data-edit]');if(edit){const p=data.find(x=>x.id===edit.dataset.edit);if(!p)return;$('productId').value=p.id;$('productName').value=p.name;$('productPrice').value=p.price;$('productSize').value=p.size||'';$('productImage').value=p.image_url||'';$('productDescription').value=p.description||'';window.scrollTo({top:0,behavior:'smooth'});return}const toggle=e.target.closest('[data-toggle]');if(toggle){const p=data.find(x=>x.id===toggle.dataset.toggle);const {error}=await client.from('products').update({active:!p.active}).eq('id',p.id);if(error)msg('Update error: '+error.message);else await loadProducts()}}}
-async function loadOrders(){if(!owner)return;const {data,error}=await client.from('orders').select('*').order('created_at',{ascending:false}).limit(100);if(error){$('adminOrders').textContent='Orders read error: '+error.message;return}$('adminOrders').innerHTML=(data||[]).map(o=>`<article class="admin-order"><b>${esc(o.customer_name)} · ${money(o.total)}</b><small>${esc(o.phone)} · ${esc(o.address)}</small><small>${new Date(o.created_at).toLocaleString('en-IN')} · Order ${esc(o.id)}</small><p>${(o.items||[]).map(i=>esc(i.name)+' × '+Number(i.qty||1)).join(', ')}</p><label>Status<select data-status="${o.id}">${['pending','paid','processing','shipped','cancelled'].map(s=>`<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></label></article>`).join('')||'<p>No orders yet.</p>';$('adminOrders').onchange=async e=>{const sel=e.target.closest('[data-status]');if(!sel)return;if(sel.value==='paid'&&!confirm('Kya aapne bank/UPI app mein payment verify kar li hai?')){await loadOrders();return}const {error}=await client.from('orders').update({status:sel.value}).eq('id',sel.dataset.status);if(error)msg('Order status update error: '+error.message);else msg('Order status updated.') }};
-sessionCheck();})();
+(() => {
+  "use strict";
+
+  const config = window.TRIVOSH_CONFIG || {};
+  const $ = id => document.getElementById(id);
+
+  const configured =
+    window.supabase &&
+    config.supabaseUrl &&
+    !config.supabaseUrl.includes("PASTE_") &&
+    config.supabaseAnonKey &&
+    !config.supabaseAnonKey.includes("PASTE_");
+
+  if (!configured) {
+    $("loginMessage").textContent =
+      "Supabase configuration पूरी नहीं है। config.js जाँचें।";
+    $("loginBtn").disabled = true;
+    return;
+  }
+
+  const db = window.supabase.createClient(
+    config.supabaseUrl,
+    config.supabaseAnonKey
+  );
+
+  function message(id, text) {
+    $(id).textContent = text;
+  }
+
+  async function checkLogin() {
+    const { data } = await db.auth.getSession();
+    const session = data.session;
+
+    if (!session) {
+      $("loginBox").classList.remove("hidden");
+      $("adminBox").classList.add("hidden");
+      return;
+    }
+
+    // केवल तय किए गए मालिक के UID को अनुमति दें।
+    if (!config.adminUserId ||
+        session.user.id !== config.adminUserId) {
+      await db.auth.signOut();
+      message("loginMessage", "इस अकाउंट को Admin की अनुमति नहीं है।");
+      return;
+    }
+
+    $("loginBox").classList.add("hidden");
+    $("adminBox").classList.remove("hidden");
+    await loadProducts();
+  }
+
+  $("loginBtn").addEventListener("click", async () => {
+    message("loginMessage", "Login हो रहा है...");
+    const email = $("email").value.trim();
+    const password = $("password").value;
+
+    const { error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      message("loginMessage", "Login नहीं हुआ: " + error.message);
+      return;
+    }
+
+    await checkLogin();
+  });
+
+  async function loadProducts() {
+    const list = $("productList");
+    list.textContent = "Loading...";
+
+    const { data, error } = await db
+      .from("products")
+      .select("id,name,price,size,image_url,description,active")
+      .order("name");
+
+    if (error) {
+      list.textContent =
+        "Products नहीं दिखे। Supabase products table और permissions जाँचें: " +
+        error.message;
+      return;
+    }
+
+    list.replaceChildren();
+
+    if (!data || data.length === 0) {
+      list.textContent = "अभी कोई product नहीं है।";
+      return;
+    }
+
+    data.forEach(product => {
+      const item = document.createElement("div");
+      item.className = "item";
+
+      const title = document.createElement("strong");
+      title.textContent = product.name || "Unnamed product";
+
+      const details = document.createElement("p");
+      details.textContent =
+        "₹" + product.price + " | " + (product.size || "");
+
+      const edit = document.createElement("button");
+      edit.textContent = "Edit name / price";
+      edit.addEventListener("click", async () => {
+        const name = prompt("Product name:", product.name || "");
+        if (name === null) return;
+        const priceText = prompt("Price ₹:", String(product.price ?? ""));
+        if (priceText === null) return;
+
+        const price = Number(priceText);
+        if (!name.trim() || !Number.isFinite(price) || price < 0) {
+          alert("Product name और सही price डालें।");
+          return;
+        }
+
+        const { error } = await db.from("products")
+          .update({ name: name.trim(), price })
+          .eq("id", product.id);
+
+        if (error) {
+          alert("Update नहीं हुआ: " + error.message);
+          return;
+        }
+
+        await loadProducts();
+      });
+
+      const toggle = document.createElement("button");
+      toggle.textContent = product.active === false
+        ? "Show product"
+        : "Hide product";
+
+      toggle.addEventListener("click", async () => {
+        const { error } = await db.from("products")
+          .update({ active: product.active === false })
+          .eq("id", product.id);
+
+        if (error) {
+          alert("बदलाव नहीं हुआ: " + error.message);
+          return;
+        }
+        await loadProducts();
+      });
+
+      item.append(title, details, edit, toggle);
+      list.appendChild(item);
+    });
+  }
+
+  $("addProductBtn").addEventListener("click", async () => {
+    const name = $("productName").value.trim();
+    const price = Number($("productPrice").value);
+
+    if (!name || $("productPrice").value === "" ||
+        !Number.isFinite(price) || price < 0) {
+      message("adminMessage", "Product name और सही price डालें।");
+      return;
+    }
+
+    const product = {
+      name,
+      price,
+      size: $("productSize").value.trim(),
+      image_url: $("productImage").value.trim(),
+      description: $("productDescription").value.trim(),
+      active: true
+    };
+
+    const { error } = await db.from("products").insert(product);
+
+    if (error) {
+      message("adminMessage", "Product add नहीं हुआ: " + error.message);
+      return;
+    }
+
+    message("adminMessage", "Product add हो गया।");
+    ["productName", "productPrice", "productSize",
+     "productImage", "productDescription"]
+      .forEach(id => $(id).value = "");
+
+    await loadProducts();
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(checkLogin, 0);
+  });
+
+  checkLogin();
+})();
