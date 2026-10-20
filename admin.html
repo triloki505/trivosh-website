@@ -1,1 +1,50 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trivosh Admin</title><link rel="stylesheet" href="style.css"></head><body class="admin-body"><header class="topbar"><a class="brand" href="index.html"><span class="logo">T</span><span>TRIVOSH<small>Owner dashboard</small></span></a><nav><a href="index.html">View store</a></nav></header><main class="admin-wrap"><div class="admin-title"><p class="eyebrow">OWNER ONLY</p><h1>Trivosh Admin</h1><p>Products, prices, product image links aur orders manage karein.</p></div><div id="adminMessage" class="notice">Pehle config.js aur Supabase SQL setup complete karein.</div><section id="loginCard" class="admin-card"><h2>Owner login</h2><label>Email<input id="adminEmail" type="email" autocomplete="username" placeholder="Supabase Auth email" required></label><label>Password<input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password" required></label><button id="loginBtn" class="btn full">Login</button></section><section id="dashboard" class="hidden"><div class="admin-card"><div class="admin-row"><h2>Add / edit product</h2><button id="logoutBtn" class="btn outline">Logout</button></div><input id="productId" type="hidden"><label>Product name<input id="productName" maxlength="100" placeholder="Floor Cleaner"></label><label>Price (₹)<input id="productPrice" type="number" min="1" step="0.01" placeholder="99"></label><label>Size<input id="productSize" maxlength="50" placeholder="1 Litre"></label><label>Photo URL (optional)<input id="productImage" type="url" placeholder="https://...jpg"></label><label>Description<input id="productDescription" maxlength="300" placeholder="Product details"></label><div class="admin-row"><button id="saveProductBtn" class="btn">Save product</button><button id="clearProductBtn" class="btn outline">Clear form</button></div></div><div class="admin-card"><h2>Products</h2><div id="adminProducts">Loading…</div></div><div class="admin-card"><h2>Customer orders</h2><p class="micro">Payment status ko tabhi paid karein jab bank/UPI app mein payment confirm ho.</p><div id="adminOrders">Loading…</div></div></section></main><footer><span>Trivosh Admin</span><a href="index.html">Store par wapas</a></footer><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="admin.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trivosh Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f5; padding:20px; }
+    .panel { max-width:900px; margin:20px auto; background:white; padding:22px; border-radius:12px; }
+    input, button { box-sizing:border-box; width:100%; padding:12px; margin:7px 0; }
+    button { background:#176b45; color:white; border:0; border-radius:6px; cursor:pointer; }
+    .item { border:1px solid #ddd; padding:12px; margin:10px 0; border-radius:8px; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>Trivosh Admin</h1>
+    <p>अपने स्टोर और प्रोडक्ट मैनेज करें</p>
+
+    <section id="loginBox">
+      <h2>Owner Login</h2>
+      <input id="email" type="email" placeholder="Admin email" autocomplete="username">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      <button id="loginBtn">Login</button>
+      <p id="loginMessage"></p>
+    </section>
+
+    <section id="adminBox" class="hidden">
+      <h2>नया प्रोडक्ट जोड़ें</h2>
+      <input id="productName" placeholder="Product name">
+      <input id="productPrice" type="number" min="0" placeholder="Price ₹">
+      <input id="productSize" placeholder="Size, जैसे 1 Litre">
+      <input id="productImage" placeholder="Image URL (optional)">
+      <input id="productDescription" placeholder="Description">
+      <button id="addProductBtn">Add Product</button>
+
+      <h2>आपके प्रोडक्ट</h2>
+      <div id="productList">Loading...</div>
+      <button id="logoutBtn">Logout</button>
+      <p id="adminMessage"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
