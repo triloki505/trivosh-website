@@ -6,3 +6,10 @@
 <div id="cartDrawer" class="drawer hidden"><div class="drawer-panel"><div class="drawer-head"><h2>Your cart</h2><button id="cartClose" class="icon-btn">×</button></div><div id="cartItems"></div><div class="total-line"><span>Total</span><b id="cartTotal">₹0</b></div><label>Your name<input id="buyerName" placeholder="Name" maxlength="80"></label><label>Mobile number<input id="buyerPhone" placeholder="10-digit mobile" inputmode="numeric" maxlength="15"></label><label>Delivery address<textarea id="buyerAddress" placeholder="Full address" rows="2" maxlength="400"></textarea></label><button id="checkoutBtn" class="btn full">Continue to payment</button><p class="micro">Order stays pending until payment is checked.</p></div></div>
 <div id="paymentModal" class="modal hidden"><div class="modal-card"><button id="paymentClose" class="icon-btn close">×</button><p class="eyebrow">UPI PAYMENT</p><h2>Pay using any UPI app</h2><p id="paymentAmount" class="amount"></p><div id="qrCode" class="qr"></div><p id="upiHint" class="micro"></p><a id="upiLink" class="btn full" href="#">Open UPI app</a><button id="whatsappOrder" class="btn outline full">Send order on WhatsApp</button><p class="micro">This website does not automatically verify UPI payments.</p></div></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="config.js"></script><script src="app.js"></script></body></html>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
+</script>
