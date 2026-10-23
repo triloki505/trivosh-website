@@ -2,7 +2,7 @@
   "name": "Trivosh Cleaning Products",
   "short_name": "Trivosh",
   "description": "Trivosh cleaning products store",
-  "start_url": "/",
+  "start_url": "/","prefer_related_applications": false,
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
